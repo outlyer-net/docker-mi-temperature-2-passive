@@ -1,5 +1,9 @@
 **Note** about this repository: This fork of the MiTemperature2 repository focuses on my use case, running this script within Docker in passive mode (sending readings by default to MQTT), and with the `--onlydevicelist` argument (i.e. only listening to known sensors).
 
+<!-- shields.io -->
+[![Docker Image Size (latest by date)][badge_image_size]][dockerhub]
+[![GitHub last commit][badge_github_last_commit]][github_commits]
+
 I had issues running the provided image so I reworked it. Running in passive mode requires running with host network mode, plus `NET_ADMIN` and `NET_RAW` capabilities.
 
 The simplest way to run this image is to use the provided `docker-compose` recipe: \
@@ -20,8 +24,15 @@ I'm only providing prebuilt images for 32-bit ARM (i.e. Raspberry Pis), to build
 ```shell
 $ docker build -t outlyernet/mi-temperature-2 -f docker/Dockerfile .
 ```
+<!-- Links -->
+[github]:    https://github.com/outlyer-net/docker-mi-temperature-2-passive
+[dockerhub]: https://hub.docker.com/repository/docker/outlyernet/mi-temperature-2
+[github_commits]: https://github.com/outlyer-net/docker-mi-temperature-2-passive/commits/master
+<!-- Aliases for images -->
+[badge_image_size]:         https://img.shields.io/docker/image-size/outlyernet/mi-temperature-2/latest
+[badge_github_last_commit]: https://img.shields.io/github/last-commit/outlyer-net/docker-mi-temperature-2-passive
 
-The original readme begins below this point.
+**The original readme begins below this point.**
 
 # Read data from Xiaomi Mijia LYWSD03MMC Bluetooth 4.2 Temperature Humidity sensor
 
