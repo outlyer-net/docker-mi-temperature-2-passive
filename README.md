@@ -1,3 +1,28 @@
+**Note** about this repository: This fork of the MiTemperature2 repository focuses on my use case, running this script within Docker in passive mode (sending readings by default to MQTT), and with the `--onlydevicelist` argument (i.e. only listening to known sensors).
+
+I had issues running the provided image so I reworked it. Running in passive mode requires running with host network mode, plus `NET_ADMIN` and `NET_RAW` capabilities.
+
+The simplest way to run this image is to use the provided `docker-compose` recipe: \
+Copy `sensors.ini.dist` to `sensors.ini` and `mqtt.conf.dist` to `mqtt.conf`, edit them to match your sensors and MQTT server and you should be able to spin a container with just:
+
+```shell
+$ docker-compose up # -d to run in the background
+```
+
+Alternatively, use the `docker` command directly:
+
+```shell
+$ docker run --net host --cap-add NET_RAW --cap-add NET_ADMIN -v ./devicelist.ini:/conf/devicelist.init outlyernet/mi-temperature-2
+```
+
+I'm only providing prebuilt images for 32-bit ARM (i.e. Raspberry Pis), to build the image manually:
+
+```shell
+$ docker build -t outlyernet/mi-temperature-2 -f docker/Dockerfile .
+```
+
+The original readme begins below this point.
+
 # Read data from Xiaomi Mijia LYWSD03MMC Bluetooth 4.2 Temperature Humidity sensor
 
 With this script you can read out the data of your LYWSD03MMC (and some other) sensors, e.g. with Raspberry Pi. Note Raspbery Pi 4 has a very limited bluetooth range. Pi Zero W gives much longer range.

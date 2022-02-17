@@ -1,25 +1,55 @@
-# Start from a Python3.7 base image I published
-
-FROM xavierrrr/xrrzero:stretchpython3.7 
+# Build-only intermediate image
+FROM debian:buster-slim AS stage0
 
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
-ENV LANG C.UTF-8
+# NOTE: This doesn't appear to be the case anymore
+#ENV LANG C.UTF-8
 
-RUN sudo apt-get update
+# Install Debian-provided python packages instead of using pip, will
+#  reduce build time considerably
+# Otherwise: pip install requests pybluez pycryptodomex bluepy paho-mqtt
+RUN apt-get update \
+	&& apt-get -y --no-install-recommends install \
+		build-essential \
+		libbluetooth-dev \
+		libglib2.0-dev \
+		python3-pip
 
-RUN sudo apt-get -y --no-install-recommends install python-pip libglib2.0-dev
+# Wheel is required for bluepy to build properly. *MUST* run as separate calls to pip install
+RUN pip3 install --upgrade pip setuptools wheel
+RUN pip3 install bluepy
 
-RUN /usr/local/bin/pip3.7 install bluepy
-RUN /usr/local/bin/pip3.7 install requests
+FROM debian:buster-slim
 
-COPY LYWSD03MMC.py LYWSD03MMC.py 
-COPY sendtovera.py sendtovera.py 
+LABEL maintainer="Toni Corvera <outlyer@gmail.com>" \
+      org.opencontainers.image.name="MiTemperature2 (Passive Mode)" \
+      org.opencontainers.image.description="Passive scanning of BLE-enabled Mijia V2 thermometers" \
+      org.opencontainers.image.url="https://hub.docker.com/repository/docker/outlyernet/mi-temperature-2" \
+      org.opencontainers.image.source="https://github.com/outlyer-net/docker-mi-temperature-2-passive"
 
-ENTRYPOINT service dbus start
+# Install Debian-provided python packages instead of using pip, will
+#  reduce build time considerably
+# Otherwise: pip install requests pybluez pycryptodomex bluepy paho-mqtt
+RUN apt-get update \
+	&& apt-get -y --no-install-recommends install \
+		libcap2-bin \
+		python3-bluez \
+		python3-paho-mqtt \
+		python3-pip \
+		python3-pycryptodome \
+		python3-requests \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
 
-#Change to the following line to match your needs
+# /usr/local/lib will only contain the packages installed by pip
+COPY --from=stage0 /usr/local/lib/ /usr/local/lib/
 
-ENTRYPOINT while true; do /usr/local/bin/python3.7m LYWSD03MMC.py -d A4:C1:38:7F:E6:DC -r -b 100 --skipidentical 50 -deb --callback sendtovera.py; sleep 2; done
+COPY ./*.py /app/
+COPY ./docker/entrypoint.sh /
+# Sample configurations
+COPY ./mqtt.conf.dist ./sensors.ini.dist /conf/
 
-# start the created image with sudo docker run --net=host -t your_image_name /bin/bash
+ENTRYPOINT /entrypoint.sh
+
+# start the created image with sudo docker run --net=host --cap-add NET_RAW --cap-add NET_ADMIN -t your_image_name /bin/bash

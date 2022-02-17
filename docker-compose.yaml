@@ -1,0 +1,23 @@
+---
+version: '3'
+
+services:
+  mi-temperature-2:
+    image: outlyernet/mi-temperature-2
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+    restart: unless-stopped
+    container_name: mi-temperature-2
+    entrypoint: /entrypoint.sh
+    volumes:
+      - ./sensors.ini:/conf/sensors.ini:ro
+      - ./mqtt.conf:/conf/mqtt.conf:ro
+    # host network mode and the NET_RAW and NET_ADMIN are required for
+    #  BLE scanning to work (or alternatively privileged mode)
+    privileged: true
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
